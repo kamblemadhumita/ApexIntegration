@@ -1,0 +1,541 @@
+/*
+  CLASS NAME:               ECSWebServicesforAddressCompliances
+  RELATED TRIGGER           ReturnRequestTriggerMain
+  PURPOSE:                  Handler class for Trigger
+  DEVELOPER:                SHADAB HUSSAIN
+  Modification Log:     
+  ---------------------------------------------------------------------------------- 
+  Developer                   data                   Description
+  ----------------------------------------------------------------------------------            
+  SHADAB HUSSAIN             30-Mar-15              New Version Created
+  SHADAB HUSSAIN             09-Apr-15              Added Pickup To Detail in SOAP Request
+  *********************************************************************************/
+public Class ECSWebServicesforAddressCompliances {
+    public static boolean isFutureUpdate = false; // To Stop the recursive calling of trigger
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethodFromTrig
+    Description    : Method to invoke a Webservice callout to screen the Addresses  Method to invoke a asynchronous Call Method by passing fields values from record
+    Return Type    : Void  
+    Parameter      : List of Ids(New Version of Return_Request__c and Old Map from Trigger )              
+    *********************************************************************************/
+    public static void AddressCompliancesMethodFromRET(list <Return_Request__c> newListReturnRequest, Map <Id,Return_Request__c> oldMapReturnRequest, Boolean newRequest) {
+        Return_Request__c beforeUpdate;     
+        String strbill;
+        string countryInformation;
+        Map<Id,String> KewillRequestMap = new Map<Id,String>();
+        Map<Id,String> KewillRequestLastModifiedTimeMap = new Map<Id,String>();
+        
+        for(Return_Request__c  RRequest : newListReturnRequest) {
+            beforeUpdate = oldMapReturnRequest.get(RRequest.Id);
+            strbill='';
+            System.debug('-----------KEWILL-----ADDRESS CHANGE ENTRY-------');
+            if(newRequest || (RRequest.Primary_Pickup_Contact__c != beforeUpdate.Primary_Pickup_Contact__c || RRequest.Pickup_City__c!= beforeUpdate.Pickup_City__c || RRequest.Pickup_Street__c != beforeUpdate.Pickup_Street__c || RRequest.Shipper_Name__c!= beforeUpdate.Shipper_Name__c || beforeUpdate.Pickup_Country__c != RRequest.Pickup_Country__c || beforeUpdate.Pickup_State__c != RRequest.Pickup_State__c || beforeUpdate.Pickup_Postal_Code__c != RRequest.Pickup_Postal_Code__c)) {
+                countryInformation = (RRequest.Pickup_Country__c == null ? 'US' : RRequest.Pickup_Country__c.substring(RRequest.Pickup_Country__c.indexOf('(') + 1, RRequest.Pickup_Country__c.indexOf(')')));
+                strbill += generateRequestData(RRequest.Id,RRequest.Shipper_Name__c,RRequest.Pickup_Street__c,RRequest.Pickup_City__c,RRequest.Pickup_State__c,RRequest.Pickup_Postal_Code__c,countryInformation,RRequest.Primary_Pickup_Contact_Name__c);
+            }
+            if(newRequest || (RRequest.Backup_Pickup_Contact__c != beforeUpdate.Backup_Pickup_Contact__c || RRequest.Pickup_City__c!= beforeUpdate.Pickup_City__c || RRequest.Pickup_Street__c != beforeUpdate.Pickup_Street__c || RRequest.Shipper_Name__c!= beforeUpdate.Shipper_Name__c || beforeUpdate.Pickup_Country__c != RRequest.Pickup_Country__c || beforeUpdate.Pickup_State__c != RRequest.Pickup_State__c || beforeUpdate.Pickup_Postal_Code__c != RRequest.Pickup_Postal_Code__c)) {
+                countryInformation = (RRequest.Pickup_Country__c == null ? 'US' : RRequest.Pickup_Country__c.substring(RRequest.Pickup_Country__c.indexOf('(') + 1, RRequest.Pickup_Country__c.indexOf(')')));
+                strbill += generateRequestData(RRequest.Id,RRequest.Shipper_Name__c,RRequest.Pickup_Street__c,RRequest.Pickup_City__c,RRequest.Pickup_State__c,RRequest.Pickup_Postal_Code__c,countryInformation,RRequest.Backup_Pickup_Contact__c);
+                //strbill += '<party>' + '<id>' + RRequest.Id + Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + RRequest.Ship_to_Shipper_Company_Name__c + '</name>' + '<address>' + RRequest.Ship_To_Address__c + '</address>' + '<city>' + RRequest.Ship_To_City__c + '</city>' + '<subDivision>' + RRequest.Ship_To_State__c + '</subDivision>' + '<postalCode>' + RRequest.Ship_To_ZipCode__c + '</postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + countryInformation + '</code>' + '</country>' + '<contact>' + RRequest.Ship_To_Contact_Name__c  + '</contact>' + '<userDefined>S</userDefined>' + '</party>';       
+            }
+            if(newRequest || (RRequest.Primary_Ship_To_Contact__c != beforeUpdate.Primary_Ship_To_Contact__c || RRequest.Ship_To_Address__c != beforeUpdate.Ship_To_Address__c || RRequest.Ship_To_Country__c != beforeUpdate.Ship_To_Country__c || RRequest.Ship_to_Shipper_Company_Name__c != beforeUpdate.Ship_to_Shipper_Company_Name__c || beforeUpdate.Ship_To_City__c != RRequest.Ship_To_City__c || beforeUpdate.Ship_To_State__c != RRequest.Ship_To_State__c || beforeUpdate.Ship_To_ZipCode__c != RRequest.Ship_To_ZipCode__c)) {
+                countryInformation = (RRequest.Ship_To_Country__c == null ? 'US' : RRequest.Ship_To_Country__c.substring(RRequest.Ship_To_Country__c.indexOf('(') + 1, RRequest.Ship_To_Country__c.indexOf(')')));
+                strbill += generateRequestData(RRequest.Id,RRequest.Ship_to_Shipper_Company_Name__c,RRequest.Ship_To_Address__c,RRequest.Ship_To_City__c,RRequest.Ship_To_State__c,RRequest.Ship_To_ZipCode__c,countryInformation,RRequest.Primary_Ship_To_Contact_Name__c);
+            }
+            if(newRequest || (RRequest.Backup_Ship_To_Contact__c != beforeUpdate.Backup_Ship_To_Contact__c || RRequest.Ship_To_Address__c != beforeUpdate.Ship_To_Address__c || RRequest.Ship_To_Country__c != beforeUpdate.Ship_To_Country__c || RRequest.Ship_to_Shipper_Company_Name__c != beforeUpdate.Ship_to_Shipper_Company_Name__c || beforeUpdate.Ship_To_City__c != RRequest.Ship_To_City__c || beforeUpdate.Ship_To_State__c != RRequest.Ship_To_State__c || beforeUpdate.Ship_To_ZipCode__c != RRequest.Ship_To_ZipCode__c)) {
+                countryInformation = (RRequest.Ship_To_Country__c == null ? 'US' : RRequest.Ship_To_Country__c.substring(RRequest.Ship_To_Country__c.indexOf('(') + 1, RRequest.Ship_To_Country__c.indexOf(')')));
+                strbill += generateRequestData(RRequest.Id,RRequest.Ship_to_Shipper_Company_Name__c,RRequest.Ship_To_Address__c,RRequest.Ship_To_City__c,RRequest.Ship_To_State__c,RRequest.Ship_To_ZipCode__c,countryInformation,RRequest.Backup_Ship_To_Contact__c);
+            }
+            //Added by Ankish Regarding JIRA ticket : BA-35993, Validate IOR address field values from kewill system
+            if(newRequest || (beforeUpdate.IOR_Contact_Name__c!=RRequest.IOR_Contact_Name__c || beforeUpdate.IOR_Company_Name__c!=RRequest.IOR_Company_Name__c || beforeUpdate.IOR_Address_1__c!=RRequest.IOR_Address_1__c || beforeUpdate.IOR_City__c!=RRequest.IOR_City__c || beforeUpdate.IOR_Country__c!=RRequest.IOR_Country__c || beforeUpdate.IOR_State_Province__c != RRequest.IOR_State_Province__c || beforeUpdate.IOR_Zip__c != RRequest.IOR_Zip__c)){            
+                countryInformation = (RRequest.IOR_Country__c == null ? 'US' : RRequest.IOR_Country__c.substring(RRequest.IOR_Country__c.indexOf('(') + 1, RRequest.IOR_Country__c.indexOf(')')));
+                //strbill += '<party>' + '<id>' + RRequest.Id + Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + RRequest.IOR_Company_Name__c  + '</name>' + '<address>' + RRequest.IOR_Address_1__c  + '</address>' + '<city>' + RRequest.IOR_City__c + '</city>' + '<subDivision>' + RRequest.IOR_State_Province__c + '</subDivision>' + '<postalCode>' + RRequest.IOR_Zip__c + '</postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + countryInformation + '</code>' + '</country>' + '<contact>' + RRequest.IORContactName__c  + '</contact>' + '<userDefined>S</userDefined>' + '</party>';
+                strbill += generateRequestData(RRequest.Id,RRequest.IOR_Company_Name__c,RRequest.IOR_Address_1__c,RRequest.IOR_City__c,RRequest.IOR_State_Province__c,RRequest.IOR_Zip__c,countryInformation,RRequest.IORContactName__c);               
+
+                System.debug('-----------KEWILL-----IOR ADDRESS CHANGE---2----'+strbill);
+            }
+            if(strbill!='' && !isFutureUpdate) {
+                KewillRequestMap.put(RRequest.id,strbill);
+                KewillRequestLastModifiedTimeMap.put(RRequest.id,RRequest.LastModifieddate+'='+countryInformation);              
+            }
+        }
+        
+        // Calling future method
+        if(KewillRequestMap.size()>0)
+            AddressCompliancesMethod(KewillRequestMap,KewillRequestLastModifiedTimeMap,'Return Request');
+        //id, Shipto_Address, Ship_To_Contact_Name, Ship_to_Shipper_Company_Name, Ship_To_Country, Ship_city, Ship_state, Ship_zip, transdate, Pickup_contact, PickUp_Company, Pickup_Address, Pickup_Country, Pickup_City, Pickup_state, Pickup_zip, IOR_Company, IOR_Address, IOR_country, IOR_contact, IOR_city, IOR_state, IOR_zip);
+    }
+    public Static String generateRequestData(Id requestId,String companyName, String companyAddress1, String companyCity, String companyState, String companyZipCode, String companyCountry, String companyContact) {
+        return '<party>' + '<id>' + requestId + Crypto.getRandomInteger() + '</id><type>SHIP_TO</type><name>' + companyName  + '</name><address>' + companyAddress1  + '</address><city>' + companyCity + '</city><subDivision>' + companyState + '</subDivision><postalCode>' + companyZipCode + '</postalCode><country>' + '<domain>Country</domain>' + '<code>' + companyCountry + '</code>' + '</country>' + '<contact>' + companyContact + '</contact>' + '<userDefined>S</userDefined>' + '</party>';
+    }
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethodFromOEMSO
+    Description    : Method to invoke a Webservice callout to screen the Addresses  Method to invoke a asynchronous Call Method by passing fields values from record
+    Return Type    : Void  
+    Parameter      : List of Ids(New Version of OEM SO and Old Map from Trigger )              
+    *********************************************************************************/
+    public static void AddressCompliancesMethodFromOEMSO(list<OEM_Sales_Order__c> OEMSOList, Map<Id,OEM_Sales_Order__c> OEMMap, Boolean isInsertRequest) {     
+        // Calling future method
+        OEM_Sales_Order__c beforeUpdate;     
+        String strbill;
+        string countryInformation;
+        Map<Id,String> KewillRequestMap = new Map<Id,String>();
+        Map<Id,String> KewillRequestLastModifiedTimeMap = new Map<Id,String>();
+        
+        for(OEM_Sales_Order__c  oemSORecord : OEMSOList) {
+            beforeUpdate = OEMMap.get(oemSORecord.Id);
+            strbill='';
+            countryInformation='';
+            System.debug('-----------KEWILL-----ADDRESS CHANGE ENTRY-------');
+            //There is no Install Name so we are passing Install Back up contact instead of pickup contact
+            if(isInsertRequest || (oemSORecord.Bill_To_Addr_1__c != beforeUpdate.Bill_To_Addr_1__c || oemSORecord.Bill_To_Contact__c != beforeUpdate.Bill_To_Contact__c || oemSORecord.Bill_To_Country__c != beforeUpdate.Bill_To_Country__c || oemSORecord.Bill_To_Name__c != beforeUpdate.Bill_To_Name__c || beforeUpdate.Bill_To_City__c != oemSORecord.Bill_To_City__c || beforeUpdate.Bill_To_State__c != oemSORecord.Bill_To_State__c || beforeUpdate.Bill_To_Zip__c != oemSORecord.Bill_To_Zip__c)) {
+                countryInformation = (oemSORecord.Bill_To_Country__c == null ? 'US' : oemSORecord.Bill_To_Country__c.substring(oemSORecord.Bill_To_Country__c.indexOf('(') + 1, oemSORecord.Bill_To_Country__c.indexOf(')')));
+                strbill += generateRequestData(oemSORecord.Id,oemSORecord.Bill_To_Name__c,oemSORecord.Bill_To_Addr_1__c,oemSORecord.Bill_To_City__c,oemSORecord.Bill_To_State__c,oemSORecord.Bill_To_Zip__c,countryInformation,oemSORecord.Bill_To_Contact__c);       
+            }
+            //There is no Pickup Name so we are passing Pickup Back up contact instead of pickup contact
+            if(isInsertRequest || (oemSORecord.Ship_To_City__c!= beforeUpdate.Ship_To_City__c || oemSORecord.Ship_To_Addr_1__c != beforeUpdate.Ship_To_Addr_1__c || oemSORecord.Ship_To_Contact__c != beforeUpdate.Ship_To_Contact__c || oemSORecord.Ship_To_Name__c!= beforeUpdate.Ship_To_Name__c || beforeUpdate.Ship_To_Country__c != oemSORecord.Ship_To_Country__c || beforeUpdate.Ship_To_State__c != oemSORecord.Ship_To_State__c || beforeUpdate.Ship_Zip__c != oemSORecord.Ship_Zip__c)) {
+                countryInformation = (oemSORecord.Ship_To_Country__c == null ? 'US' : oemSORecord.Ship_To_Country__c.substring(oemSORecord.Ship_To_Country__c.indexOf('(') + 1, oemSORecord.Ship_To_Country__c.indexOf(')')));                
+                strbill += generateRequestData(oemSORecord.Id,oemSORecord.Ship_To_Name__c,oemSORecord.Ship_To_Addr_1__c,oemSORecord.Ship_To_City__c,oemSORecord.Ship_To_State__c,oemSORecord.Ship_Zip__c,countryInformation,oemSORecord.Ship_To_Contact__c);                         
+            }
+            if(isInsertRequest || (beforeUpdate.End_User_Name__c!=oemSORecord.End_User_Name__c || beforeUpdate.End_User_Contact_Name__c!=oemSORecord.End_User_Contact_Name__c)){                           
+                String endUser=(oemSORecord.End_User_Name__c==null?'':oemSORecord.End_User_Name__c.escapeXml());
+                String endUSerContact=(beforeUpdate.End_User_Contact_Name__c==null?'':beforeUpdate.End_User_Contact_Name__c.escapeXml());
+                countryInformation='US';
+                strbill += '<party><id>' + oemSORecord.Id + Crypto.getRandomInteger() + '</id><type>SHIP_TO</type><name>' + endUser + '</name><address></address><city></city><subDivision></subDivision><postalCode></postalCode><country><domain>Country</domain><code>US</code></country><contact>' + endUSerContact + '</contact><userDefined>S</userDefined></party>';
+            }
+            if(strbill!='' && !ECSWebServicesforAddressCompliances.isFutureUpdate) {
+                KewillRequestMap.put(oemSORecord.id,strbill);
+                KewillRequestLastModifiedTimeMap.put(oemSORecord.id,oemSORecord.LastModifieddate+'='+countryInformation);              
+            }
+        }
+        // Calling future method
+        if(KewillRequestMap.size()>0)
+            AddressCompliancesMethod(KewillRequestMap,KewillRequestLastModifiedTimeMap,'OEM SO');
+    }
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethodPOC
+    Description    : Method to invoke a Webservice callout to screen the Addresses  Method to invoke a asynchronous Call Method by passing fields values from record
+    Return Type    : Void  
+    Parameter      : List of Ids(New Version of POC and Old Map from Trigger )              
+    *********************************************************************************/
+    public static void AddressCompliancesMethodPOC(List<POC__c> pocRecordList, Map<Id, POC__c> pocRecordMap, Boolean isInsertRequest) {
+    
+        POC__c beforeUpdate;     
+        String strbill;
+        string countryInformation;
+        Map<Id,String> KewillRequestMap = new Map<Id,String>();
+        Map<Id,String> KewillRequestLastModifiedTimeMap = new Map<Id,String>();
+        
+        for(POC__c  RRequest : pocRecordList) {
+            beforeUpdate = pocRecordMap.get(RRequest.Id);
+            strbill='';
+            countryInformation='';
+            System.debug('-----------KEWILL-----ADDRESS CHANGE ENTRY-------');
+            //There is no Install Name so we are passing Install Back up contact instead of pickup contact
+            if(isInsertRequest || (RRequest.Install_Street__c != beforeUpdate.Install_Street__c || RRequest.Primary_Ship_To_Contact__c != beforeUpdate.Primary_Ship_To_Contact__c || RRequest.Install_Country__c != beforeUpdate.Install_Country__c || RRequest.Backup_Ship_To_Contact__c != beforeUpdate.Backup_Ship_To_Contact__c || beforeUpdate.Install_City__c != RRequest.Install_City__c || beforeUpdate.Install_State_Province__c != RRequest.Install_State_Province__c || beforeUpdate.Install_Zip__c != RRequest.Install_Zip__c)) {
+                countryInformation = (RRequest.Install_Country__c == null ? 'US' : RRequest.Install_Country__c.substring(RRequest.Install_Country__c.indexOf('(') + 1, RRequest.Install_Country__c.indexOf(')')));
+                strbill += '<party>' + '<id>' + RRequest.Id + Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + RRequest.Backup_Ship_To_Contact__c + '</name>' + '<address>' + RRequest.Install_Street__c + '</address>' + '<city>' + RRequest.Install_City__c + '</city>' + '<subDivision>' + RRequest.Install_State_Province__c + '</subDivision>' + '<postalCode>' + RRequest.Install_Zip__c + '</postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + countryInformation + '</code>' + '</country>' + '<contact>' + RRequest.PrimaryShipToContact__c  + '</contact>' + '<userDefined>S</userDefined>' + '</party>';       
+            }
+            //There is no Pickup Name so we are passing Pickup Back up contact instead of pickup contact
+            if(isInsertRequest || (RRequest.Pickup_City__c!= beforeUpdate.Pickup_City__c || RRequest.Pickup_Street__c != beforeUpdate.Pickup_Street__c || RRequest.Primary_Pickup_Contact__c != beforeUpdate.Primary_Pickup_Contact__c || RRequest.Backup_Pickup_Contact__c!= beforeUpdate.Backup_Pickup_Contact__c || beforeUpdate.Pickup_Country__c != RRequest.Pickup_Country__c || beforeUpdate.Pickup_State_Province__c != RRequest.Pickup_State_Province__c || beforeUpdate.Pickup_Zip__c != RRequest.Pickup_Zip__c)) {
+                countryInformation = (RRequest.Pickup_Country__c == null ? 'US' : RRequest.Pickup_Country__c.substring(RRequest.Pickup_Country__c.indexOf('(') + 1, RRequest.Pickup_Country__c.indexOf(')')));
+                strbill += '<party>' + '<id>' + RRequest.Id + Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + RRequest.Backup_Pickup_Contact__c  + '</name>' + '<address>' + RRequest.Pickup_Street__c + '</address>' + '<city>' + RRequest.Pickup_City__c + '</city>' + '<subDivision>' + RRequest.Pickup_State_Province__c + '</subDivision>' + '<postalCode>' + RRequest.Pickup_Zip__c + '</postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + countryInformation + '</code>' + '</country>' + '<contact>' + RRequest.PrimaryPickupContact__c  + '</contact>' + '<userDefined>S</userDefined>' + '</party>';                         
+            }
+            if(isInsertRequest || (beforeUpdate.IOR_Company_Name__c!=RRequest.IOR_Company_Name__c || beforeUpdate.IOR_Contact_Name__c!=RRequest.IOR_Contact_Name__c || beforeUpdate.IOR_Address_1__c!=RRequest.IOR_Address_1__c || beforeUpdate.IOR_City__c!=RRequest.IOR_City__c || beforeUpdate.IOR_Country__c!=RRequest.IOR_Country__c || beforeUpdate.IOR_State_Province__c != RRequest.IOR_State_Province__c || beforeUpdate.IOR_Zip__c != RRequest.IOR_Zip__c)){            
+                countryInformation = (RRequest.IOR_Country__c == null ? 'US' : RRequest.IOR_Country__c.substring(RRequest.IOR_Country__c.indexOf('(') + 1, RRequest.IOR_Country__c.indexOf(')')));
+                strbill += '<party>' + '<id>' + RRequest.Id + Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + RRequest.IOR_Company_Name__c  + '</name>' + '<address>' + RRequest.IOR_Address_1__c  + '</address>' + '<city>' + RRequest.IOR_City__c + '</city>' + '<subDivision>' + RRequest.IOR_State_Province__c + '</subDivision>' + '<postalCode>' + RRequest.IOR_Zip__c + '</postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + countryInformation + '</code>' + '</country>' + '<contact>' + RRequest.IORContactName__c  + '</contact>' + '<userDefined>S</userDefined>' + '</party>';
+            }
+            if(strbill!='' && !isFutureUpdate) {
+                KewillRequestMap.put(RRequest.id,strbill);
+                KewillRequestLastModifiedTimeMap.put(RRequest.id,RRequest.LastModifieddate+'='+countryInformation);              
+            }
+        }
+        
+        // Calling future method
+        if(KewillRequestMap.size()>0)
+            AddressCompliancesMethod(KewillRequestMap,KewillRequestLastModifiedTimeMap,'POC');
+    }
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethodFromDisp
+    Description    : Method to invoke a Webservice callout to screen the Addresses  Method to invoke a asynchronous Call Method by passing fields values from record
+    Return Type    : Void  
+    Parameter      : List of Ids(New Version of Dispatch and Old Map from Trigger )              
+    *********************************************************************************/
+    public static void AddressCompliancesMethodDisp(list < Dispatch__c > DispList, Map < Id, Dispatch__c > DispMap) {
+        Dispatch__c disp;
+        for(Dispatch__c dis: DispList) {
+            // Access the "old" record by its ID in Trigger.oldMap
+            disp = DispMap.get(dis.Id);
+        }
+        String Customer_ContactName = [select id, Customer_Contact_Name__r.name from Dispatch__c where id = : disp.id LIMIt 1].Customer_Contact_Name__r.name;
+        System.debug('disp===' + disp);
+        String id = disp.id;
+        String Shipto_Address = disp.Shipping_Address_Street_1__c;
+        String Ship_To_Contact_Name = Customer_ContactName;
+        String Ship_To_Country = disp.Shipping_Address_Country__c;
+        String Ship_to_Shipper_Company_Name = disp.Customer_Account_Name__c;
+        datetime transdate = disp.Lastmodifieddate;     
+        Map<Id,String> KewillRequestMap = new Map<Id,String>();
+        Map<Id,String> KewillRequestLastModifiedTimeMap = new Map<Id,String>();
+        string shiptocountry = (Ship_To_Country == null ? 'US' : Ship_To_Country.substring(Ship_To_Country.indexOf('(') + 1, Ship_To_Country.indexOf(')')));
+        string strbill = '<party>' + '<id>' + disp.id+ Crypto.getRandomInteger() + '</id>' + '<type>SHIP_TO</type>' + '<name>' + Ship_to_Shipper_Company_Name + '</name>' + '<address>' + Shipto_Address + '</address>' + '<city></city>' + '<subDivision></subDivision>' + '<postalCode></postalCode>' + '<country>' + '<domain>Country</domain>' + '<code>' + shiptocountry + '</code>' + '</country>' + '<contact>' + Ship_To_Contact_Name + '</contact>' + '<userDefined>S</userDefined>' + '</party>';
+        
+        KewillRequestMap.put(id,strbill);
+        KewillRequestLastModifiedTimeMap.put(id,transdate+'='+shiptocountry);
+        // Calling future method
+        AddressCompliancesMethod(KewillRequestMap,KewillRequestLastModifiedTimeMap,'Dispatch');
+        //id, Shipto_Address, Ship_To_Contact_Name, Ship_to_Shipper_Company_Name, Ship_To_Country, Ship_city, Ship_state, Ship_zip, transdate, '', '', '', null, '', '', '', '', '', null, '', '', '', '');
+    }
+    
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethodFromAsset
+    Description    : Method to invoke a Webservice callout to screen the Addresses  Method to invoke a asynchronous Call Method by passing fields values from record
+    Return Type    : Void  
+    Parameter      : List of Ids     
+      *********************************************************************************/
+      public static void AddressCompliancesMethodFromAsset(Map<Id,Asset> assetMap)
+      {
+        String strPartAddr;
+        String strInstallAddr;
+        String countryinformation;
+        Map<Id,String> kewillRequestMap = new Map<Id,String>();
+        Map<Id,String> kewillRequestLastModifiedTimeMap = new Map<Id,String>();
+    
+        for(Asset astRecord : assetMap.values())
+        {
+            strInstallAddr = '';
+            countryinformation = '';
+        
+            countryinformation= (astRecord.Install_Country__c == null ? 'US' : astRecord.Install_Country__c.subString(astRecord.Install_Country__c.lastIndexOf('(') + 1, astRecord.Install_Country__c.lastIndexOf(')') ));
+            strInstallAddr += generateRequestData(astRecord.Id,astRecord.AccountId,astRecord.Install_Street__c,astRecord.Install_City__c,astRecord.Install_State__c,astRecord.Install_Zip__c,countryinformation,astRecord.Break_Fix_Contact_Name__c);
+        
+            countryinformation = (astRecord.Parts_Addr_Country__c == null ? 'US' : astRecord.Parts_Addr_Country__c.subString(astRecord.Parts_Addr_Country__c.lastIndexOf('(') + 1, astRecord.Parts_Addr_Country__c.lastIndexOf(')') ));
+            strInstallAddr += generateRequestData(astRecord.Id,astRecord.AccountId,astRecord.Parts_Addr_Line_1__c,astRecord.Parts_Addr_City__c,astRecord.Parts_Addr_State__c,astRecord.Parts_Addr_ZipCode__c,countryinformation,astRecord.Break_Fix_Contact_Name__c);
+        
+            if(strInstallAddr !='' && !isFutureUpdate)
+            {
+                KewillRequestMap.put(astRecord.id,strInstallAddr);
+                KewillRequestLastModifiedTimeMap.put(astRecord.id,astRecord.LastModifieddate+'='+countryInformation);
+            }
+        }
+        if(kewillRequestMap.size()> 0)
+            AddressCompliancesMethod(KewillRequestMap,KewillRequestLastModifiedTimeMap,'Asset');
+    }
+    
+    /*********************************************************************************
+    Method Name    : AddressCompliancesMethod
+    Description    : Method to invoke a Webservice callout to screen the Addresses
+    Return Type    : Void  
+    Parameter      : Shipto and Pickup  fields Values            
+    *********************************************************************************/
+    @future(callout = true)
+    Public static void AddressCompliancesMethod(Map<Id,String> KewillRequestMap, Map<Id,String> KewillRequestLastModifiedTimeMap, String ObjectName) {
+        //string ids, String Shipto_Address1, String Ship_To_Contact_Name1, String Ship_to_Shipper_Company_Name1, String Ship_To_Country1, String Ship_To_city, String Ship_To_state, String Ship_To_zip, datetime transdate1, String Pickup_contact1, String PickUp_Company1, String Pickup_Address1, String Pickup_Country1, String Pickup_City, String Pickup_state, String Pickup_zip, String IOR_Company1, String IOR_Address1, String IOR_Country1, String IOR_Contact1, String IOR_city, String IOR_state, String IOR_zip) {
+        string WebrequestResult = '';
+        String shipfromcountry = 'US';
+        String strbill = '';
+        Boolean flag = false;
+        string shiptocountry;
+        Map<Id,POC__c> POCRecordMap=new Map<Id,POC__c>();
+        Map<Id,Dispatch__c> dispatchRecordMap=new Map<Id,Dispatch__c>();
+        Map<Id,Return_Request__c> returnRequestRecordMap=new Map<Id,Return_Request__c>();
+        Map<Id,OEM_Sales_Order__c> oemSORecordMap=new Map<Id,OEM_Sales_Order__c>();
+        Map<Id,Asset> assetRecordMap = new Map<Id,Asset>();
+        List<POC__c> POCRecordList = new List<POC__c>();
+        List<Dispatch__c> dispatchRecordList = new List<Dispatch__c>();
+        List<Return_Request__c> returnRequestRecordList = new List<Return_Request__c>();
+        List<OEM_Sales_Order__c> oemSORecordList = new List<OEM_Sales_Order__c>();
+        List<Asset> assetRecordList = new List<Asset>();
+        
+        isFutureUpdate = true;  
+        
+        if(ObjectName=='Dispatch') {
+            dispatchRecordMap = new Map<Id,Dispatch__c>([select id, Status__c, kewill_response__c from Dispatch__c where id = : KewillRequestMap.keySet()]);
+        } else if(ObjectName=='Return Request') {
+            returnRequestRecordMap = new Map<Id,Return_Request__c>([select id, Freight_Forwarder_Status__c, Kewill_Response_completed__c, Kewill_Request_XML__c,Kewill_Response__c from Return_Request__c where id = : KewillRequestMap.keySet()]);                            
+        } else if(ObjectName=='POC') {
+            POCRecordMap = new Map<Id,POC__c>([select id, POC_Status__c, Kewill_Response_completed__c, Kewill_Request_XML__c,Kewill_Response__c from POC__c where id = : KewillRequestMap.keySet()]);                            
+        } else if(ObjectName=='OEM SO') {
+            oemSORecordMap = new Map<Id,OEM_Sales_Order__c>([select id, Status__c,Kewill_Response_Time__c, Trade_Compliance_Notes__c, Kewill_Response__c, Kewill_Request_XML__c, Previous_Status__c from OEM_Sales_Order__c where id = : KewillRequestMap.keySet()]);                            
+        } else if(ObjectName == 'Asset'){
+            assetRecordMap = new Map<Id,Asset>([SELECT Id, Kewill_Response__c,Trade_Violation__c,Kewill_Requst_Sent__c,Kewill_Request_XML__c FROM Asset WHERE id = : KewillRequestMap.keySet() ]);
+        }
+        
+        system.debug('-------------------KEWILL----FUTURE ENTRY------');
+        try {
+            for(Id recordId : KewillRequestMap.keySet()) {
+                system.debug('-------------------KEWILL----RECORD ID------'+recordId);
+                strbill = KewillRequestMap.get(recordId).replace('>null<', '> <');
+                system.debug('-------------------KEWILL----DATA------'+strbill);
+                strbill = strbill.replace('&', '&amp;');
+                List<String> dateTimeAndCountryList = KewillRequestLastModifiedTimeMap.get(recordId).split('=');
+                String data = '<?xml version="1.0" encoding="utf-8"?>' + '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' + '<soapenv:Body>' + '<executeScreening xmlns="http://ece.kewill.com/ws/">' + '<request>' + '<administration>' + '<subscriberId>'+ System.Label.Kewill_EndPoint_UserName + '</subscriberId>' + '<subscriberPassword>'+ System.Label.Kewill_EndPoint_Password + '</subscriberPassword>' + '<includeRequest>Y</includeRequest>' + '<comment>Nutanix ECS Request</comment>' + '</administration>' + '<serviceRequest>' + '<EmbargoScreening>Y</EmbargoScreening>' + '<PartyScreening>Y</PartyScreening>' + '<LicenseScreening>N</LicenseScreening>' + '<transaction>' + '<comment>txncomment</comment>' + '<transactionDate>' + dateTimeAndCountryList[0] + '</transactionDate>' + '<userDefined>' + recordId + '</userDefined>' + '<shipFromCountry>' + '<domain>Country</domain>' + '<code>' + 'US' + '</code>' + '</shipFromCountry>' + '<shipToCountry>' + '<domain>Country</domain>' + '<code>' + dateTimeAndCountryList[1] + '</code>' + '</shipToCountry>' + strbill + '</transaction>' + '</serviceRequest>' + '<parameters><threshold>80</threshold><countryMatch>N</countryMatch><redflag>Y</redflag></parameters>' + '</request>' + '</executeScreening>' + '</soapenv:Body>' + '</soapenv:Envelope>';
+                system.debug('-------------------KEWILL12--------strbill------' + data);
+            
+                Http HttpObj = new Http();
+                HttpRequest req = new HttpRequest();
+                req.setMethod('POST');
+                // End point where webservice is hosted.
+                req.setEndpoint(System.Label.Kewill_Prod_Endpoint);
+                req.setHeader('Content-Type', 'text/xml; charset=utf-8');
+                req.setHeader('Content-Length', string.valueof(data.length()));
+                // Name of the method which screens the address.
+                req.setHeader('SOAPAction', 'http://ece.kewill.com/ws/executeScreening');
+                req.setBody(data);
+                System.debug('Data===' + data);
+                System.debug('Req===' + req);
+                // reset request time out
+                req.setTimeout(120000);
+                HttpResponse res = HttpObj.send(req);
+                system.debug('--------Res Body---------' + res.getBody());
+                string responsestring = res.getBody();
+                system.debug('-------------------KEWILL13--------strbill------' + responsestring);
+                Dom.Document doc = new Dom.Document();
+                doc.load(responsestring);
+                Integer responseCode = res.getStatusCode();
+                // loading response in XML
+                Dom.XMLNode Root = doc.getRootElement();
+                system.debug('--------Root.getChildElements()----------' + Root.getChildElements());
+                for(Dom.XMLNode Child: Root.getChildElements()) {
+                    system.debug('--------Child--1111--------' + Child.getNodeType());
+                    system.debug('--------Child-----22222-----' + DOM.XMLNodeType.ELEMENT);
+                    system.debug('--------Child-----333333-----' + Child.getName().toLowerCase());
+                    if((Child.getNodeType() == DOM.XMLNodeType.ELEMENT) && (Child.getName().toLowerCase() == 'body')) {
+                        for(Dom.XMLNode Secondchild: Child.getChildElements()) {
+                            system.debug('--------2nd Child-----44444-----' + Secondchild.getName().toLowerCase());
+                            // system.debug('--------2nd Child-----44444-----'+Sixthchild.getName().toLowerCase());
+                            if((Secondchild.getNodeType() == DOM.XMLNodeType.ELEMENT) && (Secondchild.getName().toLowerCase() == 'executescreeningresponse')) {
+                                for(Dom.XMLNode Thirdchild: Secondchild.getChildElements()) {
+                                    if((Thirdchild.getNodeType() == DOM.XMLNodeType.ELEMENT) && (Thirdchild.getName().toLowerCase() == 'response')) {
+                                        for(Dom.XMLNode forthchild: Thirdchild.getChildElements()) {
+                                            system.debug('--------4th child-----' + forthchild.getName().toLowerCase());
+                                            if((forthchild.getNodeType() == DOM.XMLNodeType.ELEMENT) && (forthchild.getName().toLowerCase() == 'serviceResponse')) {
+                                                for(Dom.XMLNode fifthchild: forthchild.getChildElements()) {
+                                                    system.debug('--------5th child-----' + fifthchild.getName().toLowerCase());
+                                                    if((fifthchild.getNodeType() == DOM.XMLNodeType.ELEMENT) && (fifthchild.getName().toLowerCase() == 'partyResponse')) {
+                                                        for(Dom.XMLNode Sixthchild: fifthchild.getChildElements()) {
+                                                            system.debug('--------6th child-----' + sixthchild.getName().toLowerCase());
+                                                            if((Sixthchild.getNodeType() == DOM.XMLNodeType.ELEMENT) && (Sixthchild.getName().toLowerCase() == 'deniedParties')) {
+                                                                for(Dom.XMLNode Seventhchild: sixthchild.getChildElements()) {
+                                                                    WebrequestResult += Seventhchild.getText();
+                                                                    system.debug('--------WebrequestResult----------' + WebrequestResult);
+                                                                    //list<string> tempids=WebrequestResult.split('@_@');
+                                                                    system.debug('--------WebrequestResult----------' + WebrequestResult);
+                                                                    //FolderIdFund=tempids[0];  
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if(responseCode == 200 && WebrequestResult == '' && !(res.getBody().contains('<embargoResponse>'))) {
+                    system.debug('flag=====ifffff=' + flag);
+                    system.debug(res.getBody());
+                    flag = true;
+                    system.debug('flag=====ifffff=' + flag);
+                }
+                else if(responseCode == 200 && WebrequestResult != '') {
+                    system.debug('flag=====else if=======' + flag);
+                    flag = false;
+                }
+                else {
+                    system.debug('flag=====else=' + flag);
+                    flag = false;
+                }
+                system.debug('flag=====recordId=' + recordId);
+                if(returnRequestRecordMap.containsKey(recordId)) {   //Return Request Verification
+                    Return_Request__c rrequest = returnRequestRecordMap.get(recordId);
+                    rrequest.Kewill_Response_completed__c = true;
+                    rrequest.Kewill_Request_XML__c = strbill;
+                    //system.debug(strbill+'-------------------KEWILL13.2--------aaaaaa--1----'+rrequest.Kewill_Response_completed__c); 
+                    system.debug(strbill + '-------------------KEWILL13.1--------aaaaaa--1----' + rrequest.Kewill_Request_XML__c);
+                    if(Flag) {
+                        system.debug('-------------------KEWILL13--------aaaaaa--1----' + WebrequestResult);
+                        rrequest.Freight_Forwarder_Status__c = 'Submitted to Freight Forwarder';
+                        /*if(res.getBody().contains('<ns1:description>')){
+                            rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<ns1:description>')+1,res.getBody().indexof('</ns1:description>'));
+                        }
+                        else if(res.getBody().contains('<deniedParties>')){
+                            rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('Reference ID:')+14,res.getBody().indexof('='));
+                        }*/
+                        if(WebrequestResult != '') {
+                            rrequest.Kewill_Response__c = WebrequestResult.substring(WebrequestResult.indexof('WARNING') - 1, WebrequestResult.indexof('.'));
+                        }
+                        rrequest.Kewill_Response__c = '';
+                    }
+                    else {
+                        system.debug('-------------------KEWILL13--------aaaaaa--2----' + WebrequestResult);
+                        rrequest.Freight_Forwarder_Status__c = 'Denied Parties Match';
+                        /*if(res.getBody().contains('<ns1:description>')){
+                            rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<ns1:description>')+17,res.getBody().indexof('</ns1:description>'));
+                        }
+                        else if(res.getBody().contains('<deniedParties>')){
+                            rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('Reference ID:')+14,res.getBody().indexof('='));
+                        }*/
+                        
+                        //Added by Ankish - copy of OEM SO return data formate
+                            if(WebrequestResult != '' && WebrequestResult.contains('WARNING Party ID')  ) {
+                                rrequest.Kewill_Response__c=WebrequestResult;
+                            }
+                            else if(res.getBody().contains('<deniedParties><id>')) {
+                                rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<deniedParties><id>')+19,res.getBody().indexof('</id>'));
+                            }
+                            else if(res.getBody().contains('<embargo>')) {
+                                rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<embargo>'));
+                            }
+                            else if(res.getBody().contains('<deniedParties><name>')){
+                                rrequest.Kewill_Response__c=WebrequestResult;
+                            }
+                            else if(res.getBody().contains('<ns1:description>')) {
+                                rrequest.kewill_response__c = res.getBody().substring(res.getBody().indexof('<ns1:description>') + 17, res.getBody().indexof('</ns1:description>'));
+                            }
+                            /* if(WebrequestResult != '') {
+                                rrequest.Kewill_Response__c = WebrequestResult;
+                            }*/
+                        //End
+                    }
+                    returnRequestRecordList.add(rrequest);
+                    
+                } else if(POCRecordMap.containsKey(recordId)) {         //POC Record Verification
+                    POC__c rrequest = POCRecordMap.get(recordId);
+                    rrequest.Kewill_Response_completed__c = true;
+                    rrequest.Kewill_Request_XML__c = strbill;
+                    if(Flag) {
+                        rrequest.POC_Status__c = 'Submitted';
+                        if(WebrequestResult != '') {
+                            rrequest.Kewill_Response__c = WebrequestResult.substring(WebrequestResult.indexof('WARNING') - 1, WebrequestResult.indexof('.'));
+                        }
+                        rrequest.Kewill_Response__c = '';
+                    }
+                    else {
+                        system.debug('-------------------KEWILL13--------aaaaaa--2----' + WebrequestResult);
+                        rrequest.POC_Status__c = 'Denied';
+                            if(WebrequestResult != '' && WebrequestResult.contains('WARNING Party ID')  ) {
+                                rrequest.Kewill_Response__c=WebrequestResult;
+                            }
+                            else if(res.getBody().contains('<deniedParties><id>')) {
+                                rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<deniedParties><id>')+19,res.getBody().indexof('</id>'));
+                            }
+                            else if(res.getBody().contains('<embargo>')) {
+                                rrequest.Kewill_Response__c=res.getBody().substring(res.getBody().indexof('<embargo>'));
+                            }
+                            else if(res.getBody().contains('<deniedParties><name>')){
+                                rrequest.Kewill_Response__c=WebrequestResult;
+                            }
+                            else if(res.getBody().contains('<ns1:description>')) {
+                                rrequest.kewill_response__c = res.getBody().substring(res.getBody().indexof('<ns1:description>') + 17, res.getBody().indexof('</ns1:description>'));
+                            }
+                    }
+                    POCRecordList.add(rrequest);
+                } else if(dispatchRecordMap.containsKey(recordId)) {         //Dispatch Record Verification
+                    Dispatch__c dispatch = dispatchRecordMap.get(recordId);
+                    if(Flag) {
+                        if(res.getBody().contains('<ns1:description>')) {
+                            Dispatch.kewill_response__c = res.getBody().substring(res.getBody().indexof('<ns1:description>') + 17, res.getBody().indexof('</ns1:description>'));
+                        }
+                        else {
+                            Dispatch.kewill_response__c = '';
+                        }
+                    }
+                    else {
+                        if(res.getBody().contains('<ns1:description>')) {
+                            Dispatch.kewill_response__c = res.getBody().substring(res.getBody().indexof('<ns1:description>') + 17, res.getBody().indexof('</ns1:description>'));
+                        }
+                        else if(res.getBody().contains('<deniedParties><id>')) {
+                            Dispatch.kewill_response__c = res.getBody().substring(res.getBody().indexof('<deniedParties><id>') + 19, res.getBody().indexof('</id>'));
+                        }
+                        else {
+                            if(WebrequestResult != '') Dispatch.kewill_response__c = WebrequestResult;
+                        }
+                    }
+                    dispatchRecordList.add(dispatch);
+                } else if (oemSORecordMap.containsKey(recordId)) {         //OEM SO Record Verification
+                    OEM_Sales_Order__c OEMreq = oemSORecordMap.get(recordId);
+                    OEMreq.Kewill_Response__c = true;
+                    OEMreq.Kewill_Request_XML__c = strbill;
+                    if(flag) {
+                        OEMreq.Trade_Compliance_Notes__c = '';
+                        OEMreq.Kewill_Response_Time__c=System.now();
+                        update OEMreq;
+                    }
+                    else {
+                        if(OEMreq.Status__c!=null && !OEMreq.Status__c.startsWith('COMPLIANCE')) 
+                            OEMreq.Previous_Status__c = OEMreq.Status__c;
+                        OEMreq.Status__c = 'COMPLIANCE HOLD (UNDER REVIEW)';
+                        if(WebrequestResult != '' && WebrequestResult.contains('WARNING Party ID')) {
+                            system.debug('$$$$$$$$ Request ' + WebrequestResult);
+                            OEMreq.Trade_Compliance_Notes__c = WebrequestResult;
+                        }
+                        else if(res.getBody().contains('<deniedParties><id>')) {
+                            system.debug('$$$$$$$$ Request2 ' + WebrequestResult);
+                            OEMreq.Trade_Compliance_Notes__c = res.getBody().substring(res.getBody().indexof('<deniedParties><id>') + 19, res.getBody().indexof('</id>'));
+                        }
+                        else if(res.getBody().contains('<embargo>')) {
+                            OEMreq.Trade_Compliance_Notes__c = res.getBody().substring(res.getBody().indexof('<embargo>'));
+                        }
+                        else if(res.getBody().contains('<deniedParties><name>')) {
+                            OEMreq.Trade_Compliance_Notes__c = WebrequestResult;
+                        }
+                        OEMreq.Kewill_Response_Time__c=System.now();
+                        update OEMreq;
+                    }
+                    oemSORecordList.add(OEMreq);
+                } else if (assetRecordMap.containsKey(recordId)){
+                    Asset assetRec = assetRecordMap.get(recordId);
+                    assetRec.Kewill_Request_XML__c = strbill;
+                    assetRec.Kewill_Requst_Sent__c = true;
+                    assetRec.Kewill_Response__c = res.getBody();
+                    system.debug('*****WebrequestResult*****' + WebrequestResult);
+                    if(flag)
+                    {
+                        assetRec.Trade_Violation__c = null;
+                    }
+                    else
+                    {
+                        system.debug('*******WebrequestResult*******' + WebrequestResult);
+                        assetRec.Trade_Violation__c = 'Flagged';
+                    }
+                    assetRecordList.add(assetRec);                   
+                }
+            }   
+            if(returnRequestRecordList.size()>0)
+                update returnRequestRecordList;
+            if(dispatchRecordList.size()>0)
+                update dispatchRecordList;
+            if(POCRecordList.size()>0)
+                update POCRecordList;
+            if(oemSORecordList.size()>0)
+                update oemSORecordList;
+            if(assetRecordList.size()>0)
+                update assetRecordList;
+        } catch(Exception ex) {
+            system.debug('-----------Exception --------' + ex);
+        } 
+        
+    }
+    //Added By Ankish On JIRA : BA-38005
+    /*public static void packagingDispatchNotification(List < Return_Request__c > returnRequestList) {
+        Id emailTemplateId = [SELECT Id FROM EmailTemplate WHERE Name = : 'Packaging dispatch from RET form - Email Template'].id;
+        List < Messaging.Singleemailmessage > listSingleEmailMessages = new List < Messaging.Singleemailmessage > ();
+        Messaging.SingleEmailMessage mail;
+        for(Return_Request__c returnRequestObject: returnRequestList) {
+            mail = new Messaging.SingleEmailMessage();
+            List < String > toEmailUserList = new List < String > { 'ankish.a@nutanix.com' };
+            mail.setToAddresses(toEmailUserList);
+            mail.setWhatId(returnRequestObject.Id);
+            mail.setTargetObjectId(returnRequestObject.CreatedById);
+            mail.setSaveAsActivity(false);
+            mail.setTemplateId(emailTemplateId);
+            listSingleEmailMessages.add(mail);
+        }
+        List < Messaging.SendEmailResult > results = Messaging.sendEmail(listSingleEmailMessages);
+        System.debug('----------------------RET alert test411----email result---------------------------' + results);
+    }*/
+}
