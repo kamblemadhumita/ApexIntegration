@@ -1,0 +1,46 @@
+****APEX TEST METHODS DOES NOT SUPPORT CALLOUTS****
+
+you have to mock the callout inorder to test it. 
+1. Callout using static resource. 
+        StaticResourceCalloutMock mock = new StaticResourceCalloutMock();
+        mock.setStaticResource('GetAnimalResource');
+        mock.setStatusCode(200);
+        mock.setHeader('Content-Type', 'application/json;charset=UTF-8');
+        // Associate the callout with a mock response
+        Test.setMock(HttpCalloutMock.class, mock);
+        
+2. Test with HttpCalloutMock.
+      1.  Test.setMock(HttpCalloutMock.class, new AnimalsHttpCalloutMock()); <- Write a new class that will return the same response as expected from ur call out. 
+      2. Write the interface.  
+        @isTest
+        global class AnimalsHttpCalloutMock implements HttpCalloutMock {
+        // Implement this interface method
+        global HTTPResponse respond(HTTPRequest request) {
+        // Create a fake response
+          HttpResponse response = new HttpResponse();
+          response.setHeader('Content-Type', 'application/json');
+          response.setBody('{"animals": ["majestic badger", "fluffy bunny", "scary bear", "chicken", "mighty moose"]}');
+          response.setStatusCode(200);
+          return response; 
+          }
+        }
+      3. Write the test method. 
+         @isTest static void testPostCallout() {
+        // Set mock callout class 
+        Test.setMock(HttpCalloutMock.class, new AnimalsHttpCalloutMock()); 
+        // This causes a fake response to be sent
+        // from the class that implements HttpCalloutMock. 
+       HttpResponse response = AnimalsCallouts.makePostCallout();
+        // Verify that the response received contains fake values
+        String contentType = response.getHeader('Content-Type');
+        System.assert(contentType == 'application/json');
+        String actualValue = response.getBody();
+        System.debug(response.getBody());
+        String expectedValue = '{"animals": ["majestic badger", "fluffy bunny", "scary bear", "chicken", "mighty moose"]}';
+        System.assertEquals(actualValue, expectedValue);
+        System.assertEquals(200, response.getStatusCode());
+        }
+        
+When making a callout from a method, the method waits for the external service to send back the callout response before executing subsequent lines of code. Alternatively, you can place the callout code in an asynchronous method that’s annotated with @future(callout=true) or use Queueable Apex. This way, the callout runs on a separate thread, and the execution of the calling method isn’t blocked.
+
+When making a callout from a trigger, the callout must not block the trigger process while waiting for the response. For the trigger to be able to make a callout, the method containing the callout code must be annotated with @future(callout=true) to run in a separate thread.
